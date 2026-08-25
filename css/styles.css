@@ -264,8 +264,16 @@ body {
 }
 
 .identify-help ul {
-  margin: 8px 0 4px;
+  margin: 4px 0 4px;
   padding-left: 20px;
+}
+
+.clue-goal {
+  margin: 12px 0 0;
+}
+
+.clue-goal:first-of-type {
+  margin-top: 8px;
 }
 
 .tiny {

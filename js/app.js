@@ -148,7 +148,22 @@
           <span class="card-blurb">${g.blurb}</span>
         </button>`;
     }).join("");
-    return step(1, "What do you want to do?", `<div class="card-grid">${cards}</div>`);
+
+    const goalsWithClues = window.GOALS.filter((g) => g.clues?.length);
+    const cluesHelp = goalsWithClues.length
+      ? `<details class="identify-help">
+           <summary>Which one do I need?</summary>
+           ${goalsWithClues
+             .map(
+               (g) => `
+             <p class="clue-goal"><strong>${g.icon} ${g.label}</strong> if:</p>
+             <ul>${g.clues.map((c) => `<li>${c}</li>`).join("")}</ul>`
+             )
+             .join("")}
+         </details>`
+      : "";
+
+    return step(1, "What do you want to do?", `<div class="card-grid">${cards}</div>${cluesHelp}`);
   }
 
   function stepDetails(charger, batteryType) {
