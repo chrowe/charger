@@ -77,8 +77,8 @@ window.CHARGERS.push({
       id: "nimh",
       label: "NiMH",
       autoDetect: true,
-      defaultCRate: 0.5,
-      fastCRate: 1,
+      defaultCRate: 0.25,
+      fastCRate: 0.5,
       typicalCapacityMah: { AA: 2000, AAA: 900 },
       goals: {
         charge: { supported: true, mode: "charge", currentRole: "charge", notes: [] },
@@ -112,8 +112,8 @@ window.CHARGERS.push({
       id: "nicd",
       label: "NiCd",
       autoDetect: true,
-      defaultCRate: 0.5,
-      fastCRate: 1,
+      defaultCRate: 0.25,
+      fastCRate: 0.5,
       typicalCapacityMah: { AA: 800, AAA: 250 },
       goals: {
         charge: { supported: true, mode: "charge", currentRole: "charge", notes: [] },
@@ -147,8 +147,8 @@ window.CHARGERS.push({
       id: "eneloop",
       label: "Eneloop (low self-discharge NiMH)",
       autoDetect: true,
-      defaultCRate: 0.5,
-      fastCRate: 1,
+      defaultCRate: 0.25,
+      fastCRate: 0.5,
       typicalCapacityMah: { AA: 1900, AAA: 750 },
       goals: {
         charge: { supported: true, mode: "charge", currentRole: "charge", notes: [] },
@@ -278,7 +278,7 @@ window.CHARGERS.push({
       label: "NiZn",
       autoDetect: false,
       mustChargeSeparately: true,
-      defaultCRate: 0.5,
+      defaultCRate: 0.3,
       typicalCapacityMah: { AA: 1600, AAA: 550 },
       goals: {
         charge: { supported: true, mode: "charge", currentRole: "charge", notes: [] },
