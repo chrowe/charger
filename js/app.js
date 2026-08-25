@@ -206,7 +206,7 @@
     return `<section class="step"><h2><span class="step-num">${n}</span>${title}</h2>${body}</section>`;
   }
 
-  function resultHtml(charger, rec) {
+  function resultHtml(charger, rec, goal) {
     if (!rec) return "";
 
     if (!rec.supported) {
@@ -229,9 +229,6 @@
 
     const notes = [...rec.goalNotes, ...rec.batteryWarnings];
     const notesHtml = notes.length ? `<ul class="notes">${notes.map((n) => `<li>${n}</li>`).join("")}</ul>` : "";
-    const chargerNotesHtml = rec.chargerNotes.length
-      ? `<div class="charger-notes"><strong>General for this charger:</strong><ul class="notes">${rec.chargerNotes.map((n) => `<li>${n}</li>`).join("")}</ul></div>`
-      : "";
 
     return `
       <section class="step result">
@@ -239,7 +236,25 @@
         <div class="result-grid">${rows.join("")}</div>
         ${capNote}
         ${notesHtml}
-        ${chargerNotesHtml}
+      </section>
+      ${whatNextHtml(goal)}`;
+  }
+
+  function whatNextHtml(goal) {
+    if (!goal?.whatNext?.length) return "";
+    return `
+      <section class="step what-next">
+        <h2><span class="step-num">→</span>What next</h2>
+        <ul class="notes">${goal.whatNext.map((n) => `<li>${n}</li>`).join("")}</ul>
+      </section>`;
+  }
+
+  function chargerNotesSection(charger) {
+    if (!charger.notes?.length) return "";
+    return `
+      <section class="step charger-notes">
+        <h2>General for this charger</h2>
+        <ul class="notes">${charger.notes.map((n) => `<li>${n}</li>`).join("")}</ul>
       </section>`;
   }
 
@@ -289,7 +304,9 @@
     }
 
     html += "</div>";
-    html += resultHtml(charger, rec);
+    const goal = window.GOALS.find((g) => g.id === state.goalId);
+    html += resultHtml(charger, rec, goal);
+    html += chargerNotesSection(charger);
 
     app.innerHTML = html;
 

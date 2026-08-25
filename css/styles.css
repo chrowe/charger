@@ -6,6 +6,7 @@
   --text-muted: #5b6270;
   --accent: #1f6feb;
   --accent-contrast: #ffffff;
+  --accent-2: #0f9d68;
   --danger-bg: #fdeceb;
   --danger-border: #f3b4ac;
   --danger-text: #8a2c22;
@@ -21,6 +22,7 @@
     --text-muted: #9aa2b1;
     --accent: #4c8dff;
     --accent-contrast: #0b1220;
+    --accent-2: #3ddc97;
     --danger-bg: #2a1815;
     --danger-border: #6b2f26;
     --danger-text: #f3a89d;
@@ -323,11 +325,27 @@ body {
   margin-bottom: 4px;
 }
 
+.what-next {
+  border-color: var(--accent-2);
+}
+
+.what-next .step-num {
+  background: var(--accent-2);
+}
+
 .charger-notes {
-  margin-top: 14px;
-  padding-top: 12px;
-  border-top: 1px solid var(--border);
-  font-size: 0.88rem;
+  background: transparent;
+  box-shadow: none;
+}
+
+.charger-notes h2 {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.charger-notes .notes {
+  font-size: 0.82rem;
 }
 
 .result.unsupported {

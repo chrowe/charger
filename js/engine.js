@@ -71,7 +71,6 @@
         ...(batteryType.mustChargeSeparately ? ["Charge this chemistry in its own batch — don't mix it with other chemistries in the same run."] : []),
         ...(batteryType.autoDetect === false ? [`Select "${batteryType.label}" manually on the charger — it won't be picked up by Auto mode.`] : []),
       ],
-      chargerNotes: charger.notes || [],
     };
   }
 
