@@ -1,13 +1,63 @@
 (function () {
-  const state = {
-    chargerId: window.CHARGERS[0]?.id || null,
-    goalId: null,
-    batteryTypeId: null,
-    size: null,
-    capacityMah: null,
-    speed: "standard",
-    speedInfoOpen: false,
-  };
+  const STORAGE_KEY = "charger-assistant-state-v1";
+  // Only the user's actual selections are persisted — not transient UI state
+  // like whether a disclosure happens to be open.
+  const PERSISTED_KEYS = ["chargerId", "goalId", "batteryTypeId", "size", "capacityMah", "speed"];
+
+  function loadPersistedState() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return {};
+      const parsed = JSON.parse(raw);
+      return parsed && typeof parsed === "object" ? parsed : {};
+    } catch (e) {
+      return {};
+    }
+  }
+
+  function persistState() {
+    try {
+      const toSave = {};
+      PERSISTED_KEYS.forEach((k) => (toSave[k] = state[k]));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
+    } catch (e) {
+      // Private browsing / storage disabled — the app still works, it just won't remember.
+    }
+  }
+
+  // Data referenced by a saved selection (a charger, battery type, or size)
+  // may no longer exist if the app's data changed since the last visit —
+  // drop anything that doesn't resolve against the current chargers.
+  function sanitizeState(candidate) {
+    const clean = { ...candidate };
+    const charger = window.CHARGERS.find((c) => c.id === clean.chargerId);
+    if (!charger) {
+      clean.chargerId = window.CHARGERS[0]?.id || null;
+      clean.goalId = null;
+      clean.batteryTypeId = null;
+      clean.size = null;
+      clean.capacityMah = null;
+      clean.speed = "standard";
+      return clean;
+    }
+    if (clean.goalId && !window.GOALS.some((g) => g.id === clean.goalId)) clean.goalId = null;
+    if (clean.batteryTypeId && !charger.batteryTypes.some((b) => b.id === clean.batteryTypeId)) clean.batteryTypeId = null;
+    if (clean.size && !charger.formFactors.includes(clean.size)) clean.size = null;
+    return clean;
+  }
+
+  const state = Object.assign(
+    {
+      chargerId: window.CHARGERS[0]?.id || null,
+      goalId: null,
+      batteryTypeId: null,
+      size: null,
+      capacityMah: null,
+      speed: "standard",
+      speedInfoOpen: false,
+    },
+    sanitizeState(loadPersistedState())
+  );
 
   function currentCharger() {
     return window.CHARGERS.find((c) => c.id === state.chargerId);
@@ -15,6 +65,7 @@
 
   function setState(patch) {
     Object.assign(state, patch);
+    persistState();
     render();
   }
 
