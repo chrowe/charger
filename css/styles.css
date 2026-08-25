@@ -57,16 +57,23 @@ body {
   color: var(--text-muted);
 }
 
-.charger-picker {
+.top-fields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 4px;
+}
+
+.top-field {
   display: flex;
   flex-direction: column;
   gap: 4px;
   font-size: 0.85rem;
   color: var(--text-muted);
-  max-width: 320px;
+  min-width: 160px;
 }
 
-.charger-picker select {
+.top-field select {
   padding: 8px 10px;
   border-radius: var(--radius);
   border: 1px solid var(--border);
@@ -199,6 +206,41 @@ body {
   flex-direction: column;
   gap: 6px;
   font-size: 0.9rem;
+}
+
+.field-label-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.info-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.info-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.info-box {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 8px 10px;
+  margin-top: 6px;
 }
 
 .field input[type="number"] {

@@ -6,6 +6,7 @@
     size: null,
     capacityMah: null,
     speed: "standard",
+    speedInfoOpen: false,
   };
 
   function currentCharger() {
@@ -20,35 +21,70 @@
   // Exposed for inline onclick/onchange handlers built as HTML strings below.
   window.appSelect = function (key, value) {
     const patch = { [key]: value };
-    // Changing upstream choices invalidates anything decided after it.
+    // Changing an upstream choice invalidates picks that depend on it.
     if (key === "chargerId") Object.assign(patch, { goalId: null, batteryTypeId: null, size: null, capacityMah: null, speed: "standard" });
-    if (key === "goalId") Object.assign(patch, { batteryTypeId: null, size: null, capacityMah: null, speed: "standard" });
-    if (key === "batteryTypeId") Object.assign(patch, { size: null, capacityMah: null, speed: "standard" });
+    if (key === "batteryTypeId") Object.assign(patch, { capacityMah: null, speed: "standard" });
+    if (key === "size") Object.assign(patch, { capacityMah: null });
     setState(patch);
   };
 
   window.appSetCapacity = function (value) {
-    const n = parseInt(value, 10);
+    const digits = value.replace(/\D/g, "");
+    const n = parseInt(digits, 10);
     setState({ capacityMah: Number.isFinite(n) && n > 0 ? n : null });
   };
 
-  function el(html) {
-    const t = document.createElement("template");
-    t.innerHTML = html.trim();
-    return t.content.firstChild;
-  }
+  window.appToggleSpeedInfo = function () {
+    setState({ speedInfoOpen: !state.speedInfoOpen });
+  };
 
-  function chargerPickerHtml() {
-    const chargers = window.CHARGERS;
-    if (chargers.length <= 1) return "";
-    const options = chargers
-      .map((c) => `<option value="${c.id}" ${c.id === state.chargerId ? "selected" : ""}>${c.name} — ${c.tagline}</option>`)
-      .join("");
-    return `
-      <label class="charger-picker">
+  function pickerHtml(charger) {
+    const chargerOption =
+      window.CHARGERS.length > 1
+        ? `
+      <label class="top-field">
         <span>Charger</span>
-        <select onchange="appSelect('chargerId', this.value)">${options}</select>
-      </label>`;
+        <select onchange="appSelect('chargerId', this.value)">
+          ${window.CHARGERS.map((c) => `<option value="${c.id}" ${c.id === state.chargerId ? "selected" : ""}>${c.name} — ${c.tagline}</option>`).join("")}
+        </select>
+      </label>`
+        : "";
+
+    const kindOptions = charger.batteryTypes
+      .map((bt) => `<option value="${bt.id}" ${bt.id === state.batteryTypeId ? "selected" : ""}>${bt.label}</option>`)
+      .join("");
+
+    const sizeOptions = charger.formFactors
+      .map((s) => `<option value="${s}" ${s === state.size ? "selected" : ""}>${s}</option>`)
+      .join("");
+
+    const identify = charger.identify?.length
+      ? `<details class="identify-help">
+           <summary>Not sure which chemistry it is?</summary>
+           <ul>${charger.identify.map((i) => `<li><strong>${i.voltage}</strong> — ${i.chemistryHint}</li>`).join("")}</ul>
+           <p class="tiny">Check the resting voltage with a multimeter (battery out of any device, not under load) and match it above.</p>
+         </details>`
+      : "";
+
+    return `
+      <div class="top-fields">
+        ${chargerOption}
+        <label class="top-field">
+          <span>Battery kind</span>
+          <select onchange="appSelect('batteryTypeId', this.value)">
+            <option value="" ${state.batteryTypeId ? "" : "selected"} disabled>Select…</option>
+            ${kindOptions}
+          </select>
+        </label>
+        <label class="top-field">
+          <span>Size</span>
+          <select onchange="appSelect('size', this.value)">
+            <option value="" ${state.size ? "" : "selected"} disabled>Select…</option>
+            ${sizeOptions}
+          </select>
+        </label>
+      </div>
+      ${identify}`;
   }
 
   function stepGoal(charger) {
@@ -64,54 +100,35 @@
     return step(1, "What do you want to do?", `<div class="card-grid">${cards}</div>`);
   }
 
-  function stepBatteryType(charger) {
-    const cards = charger.batteryTypes.map((bt) => {
-      const selected = bt.id === state.batteryTypeId;
-      return `
-        <button class="card small ${selected ? "selected" : ""}" onclick="appSelect('batteryTypeId','${bt.id}')">
-          <span class="card-label">${bt.label}</span>
-        </button>`;
-    }).join("");
-
-    const identify = charger.identify?.length
-      ? `<details class="identify-help">
-           <summary>Not sure which chemistry it is?</summary>
-           <ul>${charger.identify.map((i) => `<li><strong>${i.voltage}</strong> — ${i.chemistryHint}</li>`).join("")}</ul>
-           <p class="tiny">Check the resting voltage with a multimeter (battery out of any device, not under load) and match it above.</p>
-         </details>`
-      : "";
-
-    return step(2, "What kind of battery is it?", `<div class="card-grid">${cards}</div>${identify}`);
-  }
-
-  function stepSize(charger) {
-    const buttons = charger.formFactors
-      .map((s) => `<button class="pill ${s === state.size ? "selected" : ""}" onclick="appSelect('size','${s}')">${s}</button>`)
-      .join("");
-    return step(3, "What size?", `<div class="pill-row">${buttons}</div>`);
-  }
-
   function stepDetails(charger, batteryType) {
     const typical = batteryType.typicalCapacityMah[state.size];
     const speedRow = batteryType.fastCRate
       ? `
         <div class="field">
-          <span>Charge speed</span>
+          <span class="field-label-row">
+            <span>Charge speed</span>
+            <button type="button" class="info-btn" aria-label="What does charge speed affect?" onclick="appToggleSpeedInfo()">ⓘ</button>
+          </span>
           <div class="pill-row">
             <button class="pill ${state.speed === "standard" ? "selected" : ""}" onclick="appSelect('speed','standard')">Standard (${batteryType.defaultCRate}C)</button>
             <button class="pill ${state.speed === "fast" ? "selected" : ""}" onclick="appSelect('speed','fast')">Fast (${batteryType.fastCRate}C)</button>
           </div>
+          ${
+            state.speedInfoOpen
+              ? `<p class="tiny info-box">Standard runs at about half the current — gentler on the cell and cooler, and the recommended default. Fast roughly doubles it to finish sooner, but runs hotter and can shave a little off the battery's long-term cycle life. Prefer Standard unless you need the battery back quickly.</p>`
+              : ""
+          }
         </div>`
       : `<p class="tiny">Fast charging isn't recommended for this chemistry — using standard (${batteryType.defaultCRate}C) speed.</p>`;
 
     return step(
-      4,
+      2,
       "A couple of details (optional)",
       `
       <div class="field">
         <label>
           <span>Rated capacity in mAh — printed on the battery${typical ? `, typically ~${typical} mAh for this size` : ""}</span>
-          <input type="number" min="1" placeholder="${typical || ""}" value="${state.capacityMah ?? ""}" oninput="appSetCapacity(this.value)" />
+          <input id="capacity-input" type="text" inputmode="numeric" pattern="[0-9]*" placeholder="${typical || ""}" value="${state.capacityMah ?? ""}" oninput="appSetCapacity(this.value)" />
         </label>
       </div>
       ${speedRow}
@@ -172,18 +189,24 @@
       return;
     }
 
+    // Rebuilding innerHTML below replaces every node, which would drop
+    // focus out of whatever field the user is typing in. Save it and put
+    // it back once the new markup is in place.
+    const active = document.activeElement;
+    const focusInfo =
+      active && active.id && app.contains(active)
+        ? { id: active.id, selectionStart: active.selectionStart, selectionEnd: active.selectionEnd }
+        : null;
+
     let html = `
       <header class="app-header">
         <h1>${charger.name}</h1>
         <p class="tagline">${charger.tagline}</p>
-        ${chargerPickerHtml()}
+        ${pickerHtml(charger)}
       </header>
       <div class="steps">`;
 
     html += stepGoal(charger);
-
-    if (state.goalId) html += stepBatteryType(charger);
-    if (state.goalId && state.batteryTypeId) html += stepSize(charger);
 
     let rec = null;
     if (state.goalId && state.batteryTypeId && state.size) {
@@ -203,6 +226,20 @@
     html += resultHtml(charger, rec);
 
     app.innerHTML = html;
+
+    if (focusInfo) {
+      const toRefocus = document.getElementById(focusInfo.id);
+      if (toRefocus) {
+        toRefocus.focus();
+        if (focusInfo.selectionStart != null) {
+          try {
+            toRefocus.setSelectionRange(focusInfo.selectionStart, focusInfo.selectionEnd);
+          } catch (e) {
+            // Some input types (e.g. number) don't support setSelectionRange — focus is enough.
+          }
+        }
+      }
+    }
   }
 
   render();
